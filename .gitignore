@@ -1,0 +1,104 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.pytest_cache/
+.ruff_cache/
+# Compiled Python bytecode. Sources are tracked; .pyc files are build output
+# that depend on the interpreter and pytest version, so they must not be.
+__pycache__/
+*.pyc
+
+# Production / generated
+dist/
+build/
+out/
+.next/
+.nuxt/
+.tmp/
+
+# Portable build artifacts
+apps/portable-python/core_payload.py
+apps/portable-python/build_info.py
+data/
+
+# Debug / logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Secrets — signing keys, certs, provisioning
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.cer
+*.crt
+*.mobileprovision
+*.keystore
+*.jks
+AuthKey*.p8
+apple-asc-api-key.p8
+
+# IDE / local tooling
+.vscode/
+.idea/
+.claude/
+.kilo/
+# Editor MCP wiring. Points at this machine's diagnostics server by absolute
+# path, so it is local configuration, not shared project config.
+/kilo.json
+
+# Internal — not for the public repo
+/app/
+app-marketing-context.md
+BASE-COMMIT.txt
+docs/reference-check.md
+docs/operator-acceptance.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Safety backup archive (local only, never commit)
+/as.7z
+
+# Root build / audit outputs
+/PSN.exe
+/PSN.exe.update.json
+/build-report.json
+/PeerSync-external-audit.zip
+
+# Release job download of the tested artifact. CI output only; an untracked
+# file here would otherwise become part of the source fingerprint that the
+# release job compares the tagged tree against.
+/release-artifact/
+
+# Nested source/safety archives in the tree root. A stale committed source
+# archive makes the tree's source of truth ambiguous and can leak an old
+# snapshot into an audit package; archives are build output, never source.
+/*.zip
+/*.7z
+/*.rar
+/*.tar
+/*.tar.gz
+
+# Local AI/editor agent configuration
+.cursor/
+.kilocode/
+.clinerules
+
+# Local scratch images
+/copy.png

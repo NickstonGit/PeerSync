@@ -1,0 +1,5 @@
+target-version = "py314"
+exclude = ["build", "dist", "node_modules", "core_payload.py", "build_info.py"]
+
+[lint]
+select = ["E9", "F"]

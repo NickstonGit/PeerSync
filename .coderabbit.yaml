@@ -1,0 +1,15 @@
+reviews:
+  path_filters:
+    - "!**/*.png"
+    - "!**/*.ico"
+    - "!**/*.webp"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.gif"
+    - "!**/*.woff"
+    - "!**/*.woff2"
+    - "!**/*.ttf"
+    - "!**/vendor.d.ts"
+    - "!package-lock.json"
+    - "!**/*.md"
+    - "!.coderabbit.yaml"

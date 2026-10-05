@@ -1,0 +1,199 @@
+name: Checks
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*-r*']
+
+jobs:
+  portable:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+
+      - name: Verify public repository hygiene
+        run: python scripts/verify-public-repo.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Reject tracked Python bytecode
+        run: python -c "import subprocess; files = subprocess.check_output(['git', 'ls-files', '*.pyc']).decode().strip(); assert not files, files"
+
+      - name: Check portable release identity metadata
+        run: npm run version:portable:check
+
+      - name: Audit all dependencies (Critical/High)
+        run: npm audit --audit-level=high
+
+      - name: Type-check supported workspaces
+        run: npm run typecheck
+
+      - name: Test TypeScript workspaces
+        run: npm run test:portable
+
+      - name: Build supported workspaces
+        run: npm run build
+
+      - name: Lint supported workspaces
+        run: npm run lint:portable
+
+      - name: Python tests
+        run: python -m unittest discover -s apps/portable-python/tests -q
+
+      - name: Python compile gate
+        run: python -m compileall -q apps/portable-python scripts
+
+      - name: Install Python lint tool
+        run: python -m pip install ruff==0.16.1
+
+      - name: Python lint
+        run: ruff check apps/portable-python scripts
+
+      - name: Audit locked Python build dependencies
+        run: |
+          python -m pip install pip-audit==2.10.1
+          python -m pip_audit -r apps/portable-python/requirements-build.txt --require-hashes --disable-pip
+
+  portable-artifact:
+    needs: portable
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: apps/portable-python/requirements-build.txt
+
+      - name: Install packaging dependency
+        run: python -m pip install --disable-pip-version-check --require-hashes -r apps/portable-python/requirements-build.txt
+
+      - name: Build and smoke-test PSN.exe
+        shell: powershell
+        run: ./scripts/build-portable-win.ps1
+
+      - name: Test direct transfer, durable resume and actual relay transfer
+        env:
+          E2E_BIG_MB: '128'
+          E2E_RELAY_BIG_MB: '128'
+          E2E_RELAY: '1'
+          E2E_REQUIRE_CHECKPOINT: '1'
+        run: python scripts/e2e-two-cores.py
+
+      - name: Test discovery and reconnect
+        run: python scripts/e2e-discovery-reconnect.py
+
+      - name: Verify independent build reproducibility
+        run: python scripts/check-build-reproducibility.py
+
+      - name: Upload portable build report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: portable-build-report
+          path: |
+            dist/build-report.json
+            dist/artifact-smoke.json
+            dist/forbidden-payload-scan.json
+            dist/reproducibility.json
+            dist/gui-smoke.json
+          if-no-files-found: error
+
+      # The exact bytes that passed every gate above, plus the manifest that
+      # describes them. Nothing rebuilds PSN.exe after this point.
+      - name: Upload exact tested executable
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: portable-exe
+          path: |
+            dist/PSN.exe
+            dist/release-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  # Publishes exactly the artifact that portable-artifact tested. It never runs
+  # PyInstaller and never rebuilds Core: it downloads, re-verifies and attaches.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: portable-artifact
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          # Release-tag monotonicity and the tagged-source fingerprint both have
+          # to see the complete history. A default shallow, single-tag clone
+          # cannot answer "is a higher revision already published?".
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+
+      - name: Download exact tested executable
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: portable-exe
+          path: release-artifact
+
+      - name: Verify released bytes against the tested manifest
+        shell: powershell
+        run: |
+          python scripts/verify-release-artifact.py `
+            --manifest release-artifact/release-manifest.json `
+            --psn release-artifact/PSN.exe `
+            --package package.json `
+            --repo . `
+            --tag "$env:GITHUB_REF_NAME" `
+            --commit "$env:GITHUB_SHA"
+
+      - name: Publish release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # One (date, revision) may name exactly one published artifact.
+          gh release view "$env:GITHUB_REF_NAME" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "A release already exists for $env:GITHUB_REF_NAME; release revisions are never re-cut."
+          }
+          $manifest = Get-Content -Raw -Encoding UTF8 release-artifact/release-manifest.json | ConvertFrom-Json
+          $notes = @(
+            "PeerSync $($manifest.releaseVersion) (revision $($manifest.releaseRevision))",
+            "",
+            "- commit: $($manifest.commit)",
+            "- PSN.exe sha256: $($manifest.psnSha256)",
+            "- source fingerprint: $($manifest.sourceFingerprint)",
+            "",
+            "This is the exact executable produced by the CI build/smoke/E2E/reproducibility gates for the tag above."
+          ) -join "`n"
+          $notes | Out-File -FilePath release-notes.md -Encoding utf8
+          gh release create "$env:GITHUB_REF_NAME" `
+            "release-artifact/PSN.exe#PSN.exe" `
+            "release-artifact/release-manifest.json#release-manifest.json" `
+            --verify-tag `
+            --title "PeerSync $($manifest.releaseIdentity)" `
+            --notes-file release-notes.md

@@ -1,0 +1,55 @@
+{
+  "name": "@peersync/drive",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/native.js",
+  "types": "./dist/native.d.ts",
+  "browser": "./dist/index.js",
+  "imports": {
+    "#fs": {
+      "bare": "bare-fs/promises",
+      "default": "fs/promises"
+    },
+    "#path": {
+      "bare": "bare-path",
+      "default": "path"
+    }
+  },
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "default": {
+        "types": "./dist/native.d.ts",
+        "default": "./dist/native.js"
+      }
+    },
+    "./transport": {
+      "types": "./dist/transport.d.ts",
+      "default": "./dist/transport.js"
+    }
+  },
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "PeerSync by Nickston",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "bare-fs": "^4.7.0",
+    "bare-path": "^3.0.0",
+    "compact-encoding": "^2.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}

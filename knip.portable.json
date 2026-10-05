@@ -1,0 +1,41 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [],
+      "project": []
+    },
+    "packages/core": {
+      "entry": [
+        "src/portable/entry.ts!",
+        "src/portable/spike-entry.ts!"
+      ],
+      "project": [
+        "src/portable/**/*.ts!",
+        "src/worklet/identity/**/*.ts!",
+        "src/worklet/peers/**/*.ts!",
+        "src/worklet/relay/**/*.ts!",
+        "src/worklet/rpc/**/*.ts!",
+        "src/worklet/transfer/**/*.ts!",
+        "!src/**/*.test.ts!",
+        "!src/**/*.test.d.ts!"
+      ]
+    },
+    "packages/drive": {
+      "entry": [
+        "src/native.ts!",
+        "src/transport.ts!"
+      ],
+      "project": [
+        "src/**/*.ts!",
+        "!src/**/*.test.ts!",
+        "!test/**!"
+      ],
+      "ignoreDependencies": ["bare-fs"],
+      "ignoreUnresolved": ["^#fs$", "^#path$"]
+    }
+  },
+  "rules": {
+    "duplicates": "off"
+  }
+}

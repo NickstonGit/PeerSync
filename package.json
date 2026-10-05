@@ -1,0 +1,41 @@
+{
+  "name": "peersync",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/drive",
+    "packages/core"
+  ],
+  "scripts": {
+    "build:portable-core-deps": "npm run version:portable:check && npm run build -w packages/drive && npm run build -w packages/core",
+    "build": "npm run build -w packages/drive && npm run build -w packages/core",
+    "typecheck": "npm run typecheck -w packages/drive && npm run typecheck -w packages/core",
+    "test:portable": "npm test -w packages/drive && npm test -w packages/core",
+    "lint:portable": "eslint packages/core packages/drive --max-warnings=0",
+    "knip:portable": "knip --config knip.portable.json --production --workspace packages/core --workspace packages/drive",
+    "version:portable": "node scripts/bump-portable-version.mjs",
+    "version:portable:check": "node scripts/bump-portable-version.mjs --check",
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint packages --max-warnings=0",
+    "format": "prettier --write \"packages/**/*.{ts,js,json,md,yml,yaml}\" \"*.md\" \"docs/**/*.md\"",
+    "format:check": "prettier --check \"packages/**/*.{ts,js,json,md,yml,yaml}\" \"*.md\" \"docs/**/*.md\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "packages/**/*.{ts,js}": "eslint --no-warn-ignored --max-warnings=0"
+  },
+  "devDependencies": {
+    "bare-build": "1.0.4",
+    "eslint": "^9.39.4",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "husky": "^9.1.7",
+    "knip": "^6.14.1",
+    "lint-staged": "^16.4.0",
+    "prettier": "~3.8.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.59.2"
+  },
+  "version": "0.0.0",
+  "releaseVersion": "031026",
+  "releaseRevision": 1
+}

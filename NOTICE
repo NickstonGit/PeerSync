@@ -1,0 +1,11 @@
+PeerSync by Nickston
+Copyright 2026 Nickston and PeerSync contributors
+
+PeerSync is an independent application. Portions of its peer-to-peer transport
+were adapted from the Apache-2.0-licensed AlterSend project
+(https://github.com/denislupookov/altersend), Copyright 2024 AlterSend.
+Those transport components have been substantially modified and integrated into
+PeerSync. No affiliation with or endorsement by the original project is implied.
+
+The Apache License 2.0 and applicable upstream copyright/attribution notices are
+retained in this repository.
