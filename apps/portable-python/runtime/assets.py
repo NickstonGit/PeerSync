@@ -4,7 +4,12 @@ writes under a real data/ subtree."""
 
 import os
 
-import core_payload
+try:
+    import core_payload
+except ModuleNotFoundError as exc:
+    if exc.name != "core_payload":
+        raise
+    core_payload = None
 
 
 def ensure_icon(data_dir: str) -> str | None:
