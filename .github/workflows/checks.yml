@@ -176,10 +176,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # One (date, revision) may name exactly one published artifact.
-          gh release view "$env:GITHUB_REF_NAME" 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          # Querying the release list succeeds even when this tag has no release yet.
+          $releaseJson = gh release list --limit 1000 --json tagName
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to query existing GitHub releases."
+          }
+
+          $existingReleases = $releaseJson | ConvertFrom-Json
+          if ($existingReleases.tagName -contains $env:GITHUB_REF_NAME) {
             throw "A release already exists for $env:GITHUB_REF_NAME; release revisions are never re-cut."
           }
+
           $manifest = Get-Content -Raw -Encoding UTF8 release-artifact/release-manifest.json | ConvertFrom-Json
           $notes = @(
             "PeerSync $($manifest.releaseVersion) (revision $($manifest.releaseRevision))",
