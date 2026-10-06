@@ -9,7 +9,7 @@
   "scripts": {
     "build:portable-core-deps": "npm run version:portable:check && npm run build -w packages/drive && npm run build -w packages/core",
     "build": "npm run build -w packages/drive && npm run build -w packages/core",
-    "typecheck": "npm run typecheck -w packages/drive && npm run typecheck -w packages/core",
+    "typecheck": "npm run typecheck -w packages/drive && npm run build -w packages/drive && npm run typecheck -w packages/core",
     "test:portable": "npm test -w packages/drive && npm test -w packages/core",
     "lint:portable": "eslint packages/core packages/drive --max-warnings=0",
     "knip:portable": "knip --config knip.portable.json --production --workspace packages/core --workspace packages/drive",
