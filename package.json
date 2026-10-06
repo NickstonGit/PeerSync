@@ -37,5 +37,8 @@
   },
   "version": "0.0.0",
   "releaseVersion": "031026",
-  "releaseRevision": 1
+  "releaseRevision": 1,
+  "allowScripts": {
+    "esbuild": true
+  }
 }
